@@ -1,0 +1,104 @@
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { SharedAnimations } from 'src/app/shared/animations/shared-animations';
+import { NgbModalConfig, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ProductExtrasApiService } from '../product-extras-api.service';
+import { CommonService } from '../../../../services/common.service';
+
+@Component({
+  selector: 'app-faq',
+  templateUrl: './faq.component.html',
+  styleUrls: ['./faq.component.scss'],
+  animations: [SharedAnimations]
+})
+
+export class FaqComponent implements OnInit {
+
+  page = 1; pageSize = 10;
+	list: any = []; maxRank: any = 0;
+	addForm: any; editForm: any; deleteForm: any;
+  pageLoader: boolean; search_bar: string;
+  vendor_id: string = "";
+
+  constructor(config: NgbModalConfig, public modalService: NgbModal, private router: Router, private api: ProductExtrasApiService, public commonService: CommonService) {
+    config.backdrop = 'static'; config.keyboard = false;
+  }
+
+  ngOnInit() {
+    this.pageLoader = true; this.list = [];
+    this.api.FAQ_LIST(this.vendor_id).subscribe(result => {
+			if(result.status) {
+        this.list = result.list;
+				this.maxRank = this.list.length;
+      }
+      else console.log("response", result);
+      setTimeout(() => { this.pageLoader = false; }, 500);
+		});
+  }
+
+  // ADD
+  onAdd() {
+    if(this.vendor_id) this.addForm.vendor_id = this.vendor_id;
+    this.api.ADD_FAQ(this.addForm).subscribe(result => {
+			if(result.status) {
+				document.getElementById('closeModal').click();
+				this.list = result.list;
+				this.maxRank = this.list.length;
+			}
+			else {
+				this.addForm.errorMsg = result.message;
+				console.log("response", result);
+			}
+		});
+  }
+
+  // EDIT
+  onEdit(x, modalName) {
+    this.api.FAQ_LIST(this.vendor_id).subscribe(result => {
+			if(result.status) {
+        let noteList = result.list;
+        let index = noteList.findIndex(obj => obj._id==x._id);
+        if(index!=-1) {
+          this.editForm = noteList[index];
+          this.editForm.prev_rank = this.editForm.rank;
+          this.modalService.open(modalName, {size: "lg"});
+        }
+        else console.log("invalid faq");
+      }
+      else console.log("response", result);
+		});
+  }
+  
+  // UPDATE
+  onUpdate() {
+    if(this.vendor_id) this.editForm.vendor_id = this.vendor_id;
+		this.api.UPDATE_FAQ(this.editForm).subscribe(result => {
+      if(result.status) {
+        document.getElementById('closeModal').click();
+        this.list = result.list;
+				this.maxRank = this.list.length;
+      }
+      else {
+				this.editForm.errorMsg = result.message;
+        console.log("response", result);
+      }
+		});
+  }
+
+  // DELETE
+  onDelete() {
+    if(this.vendor_id) this.deleteForm.vendor_id = this.vendor_id;
+    this.api.DELETE_FAQ(this.deleteForm).subscribe(result => {
+      if(result.status) {
+        document.getElementById('closeModal').click();
+        this.list = result.list;
+				this.maxRank = this.list.length;
+      }
+      else {
+				this.deleteForm.errorMsg = result.message;
+        console.log("response", result);
+      }
+		});
+  }
+
+}

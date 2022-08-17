@@ -1,0 +1,188 @@
+<div *ngIf="pageLoader" class="row">
+  <app-spinner></app-spinner>
+</div>
+
+<div *ngIf="!pageLoader">
+  <div class="breadcrumb with-back-btn">
+    <div class="row">
+      <div class="col-md-8">
+        <h1>Product Tags</h1>
+        <ul>
+          <li>Filter your products efficiently</li>
+        </ul>
+      </div>
+      <div class="col-md-4 d-flex align-items-center justify-content-end mt-sm-15">
+        <button *ngIf="!vendor_id" type="button" class="btn btn-primary"
+        (click)="tagForm = { rank: maxRank+1, form_type: 'add', option_list: [{}] }; modalService.open(tagModal, { size: 'lg'});">
+          Add New Tag
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="separator-breadcrumb border-top"></div>
+
+  <div class="top-filter-sec">
+    <div class="row mb-4">
+      <ng-container *ngIf="commonService.ys_features.indexOf('vendors')!=-1 && commonService.store_details?.login_type!='vendor'">
+        <div class="col-md-3 col-6">
+          <select name="vendor_id" class="form-control select-arrow" [(ngModel)]="vendor_id" (change)="ngOnInit();">
+            <option value="">-- All vendors --</option>
+            <option value="{{x._id}}" *ngFor="let x of commonService.vendor_list;">{{x.company_details?.brand}}</option>
+          </select>
+        </div>
+        <div class="col-md-3"></div>
+      </ng-container>
+      <!-- search box -->
+      <div *ngIf="list?.length" class="col-md-6 mt-sm-15">
+        <div class="form-group">
+          <input type="text" name="search_bar" placeholder="Search" class="form-control" [(ngModel)]="search_bar" />
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- DATA LIST -->
+  <div *ngIf="list?.length" class="list-horizontal">
+
+
+    <div class="data-list-card-wrapper">
+      <div class="data-list-card-inner">
+        <div class="row m-0">
+          <!-- SINGLE LIST ITEM -->
+          <div
+            *ngFor="let x of list | orderAsc:'rank' | fieldSearch:'name':search_bar | paginate: { itemsPerPage: pageSize, currentPage: page }; let i=index;"
+            class="col-md-12 list-item data-list-card" [@animate]="{value:'*',params:{delay: (i*100)+'ms', y:'50px'}}">
+
+            <div class="">
+              <div class="">
+                <div class="card-body">
+                  <!-- OTHER DATA -->
+
+                  <div class="row">
+                    <div class="col-md-3 d-flex align-items-center">
+                      <p class="w-sm-100 m-b-0">{{x.name}}</p>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-center">
+                      <p class="w-sm-100 m-b-0">{{x._id}}</p>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-center">
+                      <p class="m-0 text-muted text-small w-sm-100 m-b-0">
+                        {{x.option_list?.length}} Options
+                      </p>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-center justify-content-end">
+                      <p class="m-0 text-muted text-small w-sm-100 d-lg-block item-actions">
+                        <button class="btn btn-wide black-outline-btn w-md-100 mr-3" (click)="onEdit(x, tagModal);">
+                          <span class="black-outline-txt">Edit</span>
+                        </button>
+                        <button *ngIf="commonService.store_details?.login_type!='vendor'" class="btn orng-outline-btn w-md-100"
+                          (click)="deleteForm = x; modalService.open(deleteModal, { centered: true });">
+                          <span class="orng-outline-txt">Remove</span>
+                        </button>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- PAGINATION CONTROL -->
+    <div class="row">
+      <div class="col-md-12 mt-3">
+        <pagination-controls (pageChange)="page=$event; commonService.pageTop(0);" autoHide="true" responsive="true"
+          maxSize="5" previousLabel="" nextLabel=""></pagination-controls>
+      </div>
+    </div>
+
+
+  </div>
+
+  <div *ngIf="!list?.length" class="row">
+    <div class="col-md-12 d-flex flex-column align-items-center justify-content-center no-rec-found-wrapper">
+      <img class="no-rec-found" src="assets/images/no_records_found.png" alt="no-records">
+      <p align="center">No data to display. Add a new tag to start filtering your products.</p>
+    </div>
+  </div>
+</div>
+
+<!-- TAG MODAL -->
+<ng-template #tagModal let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">
+       {{ (tagForm.form_type=='add')? 'New Tag': tagForm.name }}
+    </h4>
+  </div>
+  <form autocomplete="off" (ngSubmit)="onSubmit();" ngNativeValidate>
+    <div class="modal-body">
+      <div class="form-group">
+        <div *ngIf="commonService.store_details?.login_type!='vendor'" class="row">
+          <div class="col-md-6 form-group mb-3">
+            <label>Title</label>
+            <input type="text" name="name" class="form-control" [(ngModel)]="tagForm.name" required />
+          </div>
+          <div class="col-md-6 form-group mb-3">
+            <label>Rank</label>
+            <input type="number" name="rank" class="form-control" [(ngModel)]="tagForm.rank" min="1" max="{{maxRank+1}}" appNumberOnly required />
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6" *ngFor="let x of tagForm.option_list; let i=index;">
+            <div class="row">
+              <div class="col-md-12 form-group mb-3">
+                <div class="card p-2">
+                  <label>Option {{i+1}}</label>
+                  <span *ngIf="tagForm.option_list.length > 1" (click)="tagForm.option_list.splice(i, 1);"
+                    class="material-icons item-close absolute-item-close float-right " aria-hidden="true">close</span>
+                  <input type="text" name="name{{i}}" id="name" class="form-control" [(ngModel)]="x.name"
+                    #name="ngModel" required />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="tagForm.option_list?.length" class="col-md-12 form-group">
+            <span class="add-another  x-close" (click)="tagForm.option_list.push({});">
+              <b>ADD ANOTHER OPTION</b>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="tagForm.errorMsg">
+        <p class="text-danger">{{ tagForm.errorMsg }}</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" id="closeModal" class="btn btn-wide black-outline-btn" (click)="modal.dismiss('Cross click');">
+        <span class="black-outline-txt">Cancel</span>
+      </button>
+      <button type="submit" class="btn btn-wide btn-primary ladda-button m-1" [disabled]="tagForm.submit" [ladda]="tagForm.submit">
+        {{ (tagForm.form_type=='add')? 'Add': 'Update' }}
+      </button>
+    </div>
+  </form>
+</ng-template>
+
+<!-- DELETE MODAL -->
+<ng-template #deleteModal let-modal>
+  <div class="modal-body">
+    <p>
+      <strong>Are you sure you want to delete
+        <span class="txt-grdint-highlight">"{{deleteForm.name}}"</span> tag?</strong>
+    </p>
+    <div *ngIf="deleteForm.errorMsg">
+      <p class="text-danger">{{ deleteForm.errorMsg }}</p>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" id="closeModal" class="btn btn-wide black-outline-btn"
+      (click)="modal.dismiss('Cross click');">
+      <span class="black-outline-txt">No</span>
+    </button>
+    <button type="button" (click)="onDelete();" class="btn btn-wide btn-primary ladda-button m-1"
+    [disabled]="deleteForm.submit" [ladda]="deleteForm.submit">Yes</button>
+  </div>
+</ng-template>
