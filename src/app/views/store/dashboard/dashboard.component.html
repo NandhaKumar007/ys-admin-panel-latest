@@ -428,7 +428,7 @@
         <div *ngIf="!preLoader && order_details?.order_list?.length" id="chart" >
           <apx-chart [series]="chartOptions.series" [chart]="chartOptions.chart" [xaxis]="chartOptions.xaxis" [dataLabels]="chartOptions.dataLabels"
             [grid]="chartOptions.grid" [stroke]="chartOptions.stroke" [title]="chartOptions.title" [fill]="chartOptions.fill" 
-            [tooltip]="chartOptions.tooltip" [colors]="chartOptions.colors" ></apx-chart>
+            [tooltip]="chartOptions.tooltip" [colors]="chartOptions.colors" [markers]="chartOptions.markers" ></apx-chart>
         </div>
       </div>
     </div>
@@ -498,7 +498,7 @@
               <i class="fa fa-circle-o-notch fa-spin load-spin"></i>
             </div>
             <!-- <div id="dashboard-piechart" *ngIf="!preLoader" echarts [options]="chartPie" [autoResize]="true" style="height: 200px;"></div> -->
-            <div id="piechart" *ngIf="!preLoader" class="align-items-center center">
+            <div id="piechart" *ngIf="!preLoader && pieChartStatus" class="align-items-center center">
               <apx-chart [series]="piechartOptions.series" [chart]="piechartOptions.chart" [labels]="piechartOptions.labels"
               [responsive]="piechartOptions.responsive" [colors]="piechartOptions.colors" [legend]="piechartOptions.legend"
               [dataLabels]="piechartOptions.dataLabels" [plotOptions]="piechartOptions.plotOptions" ></apx-chart>

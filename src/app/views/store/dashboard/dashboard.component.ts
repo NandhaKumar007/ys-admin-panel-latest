@@ -190,7 +190,7 @@ export class DashboardComponent implements OnInit {
   };
   whatsNewStep: number = 1;
   totalWhatsNewScreen: number = Object.keys(this.whats_new_list).length;
-  promotions: any = [];
+  promotions: any = []; pieChartStatus:boolean;
 
   constructor(
     config: NgbModalConfig, public modalService: NgbModal, private api: ApiService,
@@ -242,6 +242,7 @@ export class DashboardComponent implements OnInit {
   }
 
   getDashboardData() {
+    this.pieChartStatus = false;
     if(this.filterForm.from_date && this.filterForm.to_date && new Date(this.filterForm.to_date) >= new Date(this.filterForm.from_date)) {
       this.filterForm.from_date = new Date(new Date(this.filterForm.from_date).setHours(0,0,0,0));
       this.filterForm.to_date = new Date(new Date(this.filterForm.to_date).setHours(23,59,59,999));
@@ -275,87 +276,96 @@ export class DashboardComponent implements OnInit {
           this.order_details.gc_total_sales = this.order_details.gc_list.reduce((accumulator, currentValue) => {
             return accumulator + currentValue['price'];
           }, 0);
-          this.chartPie = {
-            ...echartStyles.defaultOptions, ...{
-              tooltip: {
-                trigger: 'item',
-                formatter: '{a} <br/>{b}: {c} ({d}%)'
-              },
-              legend: {
-                show: true,
-                textStyle: { color:'#d83967' },
-              },
-              series: [{
-                type: 'pie',
-                ...echartStyles.pieRing,
-                avoidLabelOverlap: false,
-                width:'50%',
-                label: {
-                  normal: {
-                    show: false,
-                    position: 'center'
-                  },
-                  emphasis: {
-                    show: true,
-                  }
-                },
-                labelLine: {
-                  normal: { show: false }
-                },
-                data: [
-                  { name: 'Awaiting', value: this.order_details.placed_orders, itemStyle: { color: '#FFC107' } },
-                  { name: 'Confirmed', value: this.order_details.confirmed_orders, itemStyle: { color: '#42bcf5' } },
-                  { name: 'Transit', value: this.order_details.dispatched_orders, itemStyle: { color: '#4CAF50' } },
-                  { name: 'Pending', value: this.order_details.pending_orders, itemStyle: { color: '#f56725' } },
-                  { name: 'Completed', value: this.order_details.completed_orders, itemStyle: { color: '#d83967' } },
-                  { name: 'Cancelled', value: this.order_details.cancelled_orders, itemStyle: { color: '#a9a9a9' } }
-                ]
-              }]
-            }
-          };
+
+          // this.chartPie = {
+          //   ...echartStyles.defaultOptions, ...{
+          //     tooltip: {
+          //       trigger: 'item',
+          //       formatter: '{a} <br/>{b}: {c} ({d}%)'
+          //     },
+          //     legend: {
+          //       show: true,
+          //       textStyle: { color:'#d83967' },
+          //     },
+          //     series: [{
+          //       type: 'pie',
+          //       ...echartStyles.pieRing,
+          //       avoidLabelOverlap: false,
+          //       width:'50%',
+          //       label: {
+          //         normal: {
+          //           show: false,
+          //           position: 'center'
+          //         },
+          //         emphasis: {
+          //           show: true,
+          //         }
+          //       },
+          //       labelLine: {
+          //         normal: { show: false }
+          //       },
+          //       data: [
+          //         { name: 'Awaiting', value: this.order_details.placed_orders, itemStyle: { color: '#FFC107' } },
+          //         { name: 'Confirmed', value: this.order_details.confirmed_orders, itemStyle: { color: '#42bcf5' } },
+          //         { name: 'Transit', value: this.order_details.dispatched_orders, itemStyle: { color: '#4CAF50' } },
+          //         { name: 'Pending', value: this.order_details.pending_orders, itemStyle: { color: '#f56725' } },
+          //         { name: 'Completed', value: this.order_details.completed_orders, itemStyle: { color: '#d83967' } },
+          //         { name: 'Cancelled', value: this.order_details.cancelled_orders, itemStyle: { color: '#a9a9a9' } }
+          //       ]
+          //     }]
+          //   }
+          // };
 
           // line chart
-          this.buildLineChart(this.order_details.order_list).then((respData) => {
-            this.chartLine = {
-              ...echartStyles.lineNoAxis, ...{
-                series: [{
-                  data: respData.orders,
-                  lineStyle: {
-                    color: 'rgba(216, 57, 103, .86)',
-                    width: 3,
-                    shadowColor: 'rgba(0, 0, 0, .2)',
-                    shadowOffsetX: -1,
-                    shadowOffsetY: 8,
-                    shadowBlur: 10
-                  },
-                  label: { show: true, color: '#212121' },
-                  type: 'area',
-                  smooth: true,
-                  itemStyle: {
-                    borderColor: 'rgba(216, 57, 103, 0.86)'
-                  }
-                }]
-              }
-            };
-            this.chartLine.xAxis.data = respData.days;
-          });
+          // this.buildLineChart(this.order_details.order_list).then((respData) => {
+          //   this.chartLine = {
+          //     ...echartStyles.lineNoAxis, ...{
+          //       series: [{
+          //         data: respData.orders,
+          //         lineStyle: {
+          //           color: 'rgba(216, 57, 103, .86)',
+          //           width: 3,
+          //           shadowColor: 'rgba(0, 0, 0, .2)',
+          //           shadowOffsetX: -1,
+          //           shadowOffsetY: 8,
+          //           shadowBlur: 10
+          //         },
+          //         label: { show: true, color: '#212121' },
+          //         type: 'area',
+          //         smooth: true,
+          //         itemStyle: {
+          //           borderColor: 'rgba(216, 57, 103, 0.86)'
+          //         }
+          //       }]
+          //     }
+          //   };
+          //   this.chartLine.xAxis.data = respData.days;
+          // });
+
 
           // ng-apexchart
+          
           this.onChart(this.order_details.order_list).then((chartData)=>{
+            console.log("chartData",chartData)
             this.chartOptions = {
               chart: { type: "area", height: auto, toolbar: { show: false }, },
               dataLabels: { enabled: false },
-              series: [{ name: "Orders", data:  chartData.orders }],
+              series: [{ name: "Orders", data: chartData.orders }],
               fill: {  type: ["gradient"], colors: ["rgba(216, 57, 103, .86)"], gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.9, stops: [0, 90, 100] } },
               stroke: { curve: "smooth", show: true, width: 3, colors: ["rgba(216, 57, 103, .86)"] },
-              xaxis: { categories: chartData.days, tickAmount: { show: true }, tooltip: { enabled: false } },
+              xaxis: { show: true, categories: chartData.days, tickAmount: { show: true }, tooltip: { enabled: false }, labels: {show: true} },
+              // yaxis: { show: true, categories: chartData.days, tickAmount: { show: true }, tooltip: { enabled: false }, labels: {show: true}  },
+              markers: { show: true, shape: "circle", radius: 2, size: 2},
               tooltip: {enabled: true},
               colors: ["rgba(216, 57, 103, .86)"],
               };
           });
 
           // function to call pie-chart
-          this.onPiechart(this.order_details);
+          if(this.order_details.placed_orders >0 || this.order_details.confirmed_orders >0 || this.order_details.dispatched_orders >0 || this.order_details.pending_orders>0 || this.order_details.completed_orders >0 || this.order_details.cancelled_orders >0){ 
+            this.pieChartStatus = true;
+            this.onPiechart(this.order_details); 
+          }
         }
         else console.log("dashboard response", result);
       });
@@ -435,34 +445,7 @@ export class DashboardComponent implements OnInit {
 		this.getDashboardData();
   }
   
-  async buildLineChart(orderList) {
-    let diff = Math.abs(new Date(this.filterForm.from_date).getTime() - this.filterForm.to_date.getTime())+1;
-    let diffDays = Math.ceil(diff / (1000*3600*24))-1;
-    let dayList = []; let ordersCountList = [];
-    if(diffDays > 0) {
-      for(let i=1; i<=diffDays; i++)
-      {
-        let currDate = new Date(this.filterForm.to_date).setDate(new Date(this.filterForm.to_date).getDate() - (diffDays-i));
-        let orderCount = await this.processOrderList(orderList, new Date(currDate).setHours(0,0,0,0), new Date(currDate).setHours(23,59,59,999));
-        if(orderCount > 0) {
-          dayList.push(this.datepipe.transform(new Date(currDate), 'dd MMM y'));
-          ordersCountList.push(orderCount);
-        }
-      }
-    }
-    else {
-      for(let i=0; i<=23; i++)
-      {
-        let orderCount = await this.processOrderList(orderList, new Date(this.filterForm.from_date).setHours(i,0,0,0), new Date(this.filterForm.from_date).setHours(i,59,59,999));
-        if(orderCount > 0) {
-          dayList.push(this.datepipe.transform(new Date(new Date(this.filterForm.from_date).setHours(i,0,0,0)), 'hh:mm a'));
-          ordersCountList.push(orderCount);
-        }
-      }
-    }
-    return ({days: dayList, orders: ordersCountList});
-  }
-
+  // apex-chart callback function
   async onChart(orderList) {
     let diff = Math.abs(new Date(this.filterForm.from_date).getTime() - this.filterForm.to_date.getTime())+1;
     let diffDays = Math.ceil(diff / (1000*3600*24))-1;
@@ -497,6 +480,45 @@ export class DashboardComponent implements OnInit {
       resolve(count);
     });
   }
+
+  // async onChartTemp(orderList) {
+  //   let diff = Math.abs(new Date(this.filterForm.from_date).getTime() - this.filterForm.to_date.getTime())+1;
+  //   let diffDays = Math.ceil(diff / (1000*3600*24))-1;
+  //   let dayList = []; let ordersCountList = [];
+  //   console.log("diff", diff)
+  //   console.log("diffDays", diffDays)
+  //   if(diffDays > 0) {
+  //     console.log("true")
+  //     for(let i=1; i<=diffDays; i++)
+  //     {
+  //       let currDate = new Date(this.filterForm.to_date).setDate(new Date(this.filterForm.to_date).getDate() - (diffDays-i));
+  //       let orderCount = await this.processOrderList(orderList, new Date(currDate).setHours(0,0,0,0), new Date(currDate).setHours(23,59,59,999));
+  //       if(orderCount > 0) {
+  //         dayList.push(this.datepipe.transform(new Date(currDate), 'dd MMM y'));
+  //         ordersCountList.push(orderCount);
+  //       }
+  //     }
+  //   }
+  //   else {
+  //     console.log("false")
+  //     for(let i=0; i<=23; i++)
+  //     {
+  //       let orderCount = await this.processOrderList(orderList, new Date(this.filterForm.from_date).setHours(i,0,0,0), new Date(this.filterForm.from_date).setHours(i,59,59,999));
+  //       if(orderCount > 0) {
+  //         dayList.push(this.datepipe.transform(new Date(new Date(this.filterForm.from_date).setHours(i,0,0,0)), 'hh:mm a'));
+  //         ordersCountList.push(orderCount);
+  //       }
+  //     }
+  //   }
+  //   return ({days: dayList, orders: ordersCountList});
+  // }
+
+  // processOrderList(orderList, fromDate, toDate) {
+  //   return new Promise((resolve, reject) => {
+  //     let count = orderList.filter(obj => new Date(obj.created_on) >= new Date(fromDate) || new Date(toDate) > new Date(obj.created_on)).length;
+  //     resolve(count);
+  //   });
+  // }
   
   async buildCustomerList(customerList) {
     let updatedCustomers = [];
@@ -572,18 +594,22 @@ export class DashboardComponent implements OnInit {
   } 
 
   // pie-chart in apex chart
-  onPiechart(pieValue){
-    console.log("pieValue", pieValue)
-    // if(!pieValue.length){}
+  onPiechart(pieChartValue){
     this.piechartOptions = {
-      series: [ pieValue.placed_orders, pieValue.confirmed_orders, pieValue.dispatched_orders,
-        pieValue.pending_orders, pieValue.completed_orders, pieValue.cancelled_orders
+      series: [ pieChartValue.placed_orders, pieChartValue.confirmed_orders, pieChartValue.dispatched_orders,
+        pieChartValue.pending_orders, pieChartValue.completed_orders, pieChartValue.cancelled_orders
       ],
       chart: { type: "donut", width: 400 },
-      legend: { position: "right", textStyle: { color:'#d83967' }, fontSize: '10px' },
+      legend: { position: "right", textStyle: { color:'#d83967' }, fontSize: '12px' },
       labels: ["Awaiting", "Confirmed", "Transit", "Pending", "Completed", "Cancelled"],
       colors: ['#FFC107', '#42bcf5', '#4CAF50', '#f56725', '#d83967', '#a9a9a9'],
-      dataLabels: { enabled: true, style: {fontSize: '10px'} },
+      dataLabels: { 
+        enabled: true, 
+        style: {fontSize: '10px'},  
+        // formatter: function (val, opts) {
+        // return opts.w.config.series[opts.seriesIndex]
+        // }, 
+      },
       responsive: [ { breakpoint: 480 }],
       // plotOptions: {
       //   pie: {
@@ -601,6 +627,7 @@ export class DashboardComponent implements OnInit {
       //   }
       // }
     };
-  }
+
+}
 
 }
